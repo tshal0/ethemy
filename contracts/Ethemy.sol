@@ -50,7 +50,8 @@ contract Ethemy {
    function dispense() {
       require(msg.sender == owner);
       address shareholder;
-      for (var i = 0; i < shareholders.length; i++) {
+      // Infinite loop since var i goes to 255 and wraps around
+      for (var i = 0; i < shareholders.length; i++) { 
          shareholder = shareholders[i];
          uint sh = shares[shareholder];
          shares[shareholder] = 0;
