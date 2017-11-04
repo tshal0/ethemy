@@ -10,24 +10,21 @@ pragma solidity ^0.4.9;
 
 // THIS CONTRACT CONTAINS BUGS - DO NOT USE
 
-// Bugs found thus far:
+// Bugs found thus far: '0xa8a0d322b1e77575afb8d9dd79859d876b199c6c',
 
 // 1. var used instead of uint; All addresses stored after the 255th will be have their ether sent to the original 255 addresses when dispense() is called.
 // 2. Re-entrancy: Withdraw sends ether before detecting a failure, a contract can be designed to recursively call withdraw()
 // 3. tx.origin walks all the way up the call stack to find the originating owner of the transaction; a vulnerable user could interact with a malicious contract that then 
 //    calls addShareholder however many times they want.
-contract Ethemy {
+contract Dev {
 
 
     /// Mapping of ether shares of the contract.
     mapping(address => uint) shares;
     address owner;
     address[] shareholders;
-    event FailedSend(address, uint);
 
-    event ShareholderLength(uint256 _value);
-
-    function Ethemy() {
+    function Dev() {
         owner = msg.sender;
     }
 
@@ -35,34 +32,16 @@ contract Ethemy {
         shares[msg.sender] = msg.value;
     }
 
+    function addAddress(address _addr) {
+        shareholders.push(_addr);
+    }
+
     function getLength() constant returns (uint) {
         return shareholders.length;
     }
 
-    function addShareholder(address shareholder) {
-        require(tx.origin == owner);
-        shareholders.push(shareholder);
-    }
-
-    /// Withdraw your share.
-    function withdraw() {
-        if (msg.sender.send(shares[msg.sender])) {
-            shares[msg.sender] = 0;
-        } else {
-            FailedSend(msg.sender, shares[msg.sender]);
-        }
-    }
-
-    function dispense() {
-        require(msg.sender == owner);
-        address shareholder;
-        // Infinite loop since var i goes to 255 and wraps around
-        for (var i = 0; i < shareholders.length; i++) { 
-            shareholder = shareholders[i];
-            uint sh = shares[shareholder];
-            shares[shareholder] = 0;
-            shareholder.send(sh);
-        }
+    function getAddresses() external returns (address[]) {
+        return shareholders;
     }
 
 }
