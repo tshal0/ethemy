@@ -32,7 +32,7 @@ contract Ethemy {
     }
 
     function () payable {
-        shares[msg.sender] = msg.value;
+        shares[msg.sender] = msg.value; // Overwrites the old balance, and doesn't create a shareHolder account?
     }
 
     function getLength() constant returns (uint) {
