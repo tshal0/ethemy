@@ -9,7 +9,7 @@
 pragma solidity ^0.4.9;
 
 
-contract Dev {
+contract Lunyr {
 
 
     // Added an upper bound to the contract with regard to shareholder addresses.
@@ -17,13 +17,15 @@ contract Dev {
     address owner;
     address[] shareholders;
     // Defining an upper bound on shareholder amount due to gas costs of dispense(), 
-    uint constant MAX_SHAREHOLDERS = 250;
+    // And because without it using a var (uint8) would result in an infinite loop once 
+    // shareholders.length went > 255
+    uint constant MAX_SHAREHOLDERS = 255;
 
     event FailedSend(address, uint);
 
     event FailedAddShareholder(bytes32);
 
-    function Dev() {
+    function Lunyr() {
         owner = msg.sender;
     }
 

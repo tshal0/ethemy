@@ -9,43 +9,39 @@ pragma solidity ^0.4.9;
 // (ʘ‿ʘ)(ʘ‿ʘ)(ʘ‿ʘ)
 
 // THIS CONTRACT CONTAINS BUGS - DO NOT USE
-
-// Bugs found thus far:
-
-// 1. var used instead of uint; All addresses stored after the 255th will be have their ether sent to the original 255 addresses when dispense() is called.
-// 2. Re-entrancy: Withdraw sends ether before detecting a failure, a contract can be designed to recursively call withdraw()
-// 3. tx.origin walks all the way up the call stack to find the originating owner of the transaction; a vulnerable user could interact with a malicious contract that then 
-//    calls addShareholder however many times they want.
 contract Ethemy {
 
 
-    /// Mapping of ether shares of the contract.
-    mapping(address => uint) shares;
-    address owner;
-    address[] shareholders;
-    event FailedSend(address, uint);
+   /// Mapping of ether shares of the contract.
+   mapping(address => uint) shares;
+   address owner;
+   address[] shareholders;
+   event FailedSend(address, uint);
 
-    event ShareholderLength(uint256 _value);
-
-    function Ethemy() {
-        owner = msg.sender;
-    }
+   function Ethemy() {
+      owner = msg.sender;
+   }
 
     function () payable {
-        shares[msg.sender] = msg.value; // Overwrites the old balance, and doesn't create a shareHolder account?
-    }
-
-    function getLength() constant returns (uint) {
-        return shareholders.length;
+        // Shares balance is overridden every time a shareHolder sends money. 
+        shares[msg.sender] = msg.value;
+        // Also, by not adding the sender to shareholders, dispense() will not 
+        // dispense all shares back to all users who sent this contract money. 
     }
 
     function addShareholder(address shareholder) {
+        // Using tx.origin exposes the contract to an owner impersonation attack. 
+        // If the owner interacts with a malicious contract, the malicious contract could execute
+        // this function successfully (since tx.origin checks for transaction originator, not msg sender)
         require(tx.origin == owner);
         shareholders.push(shareholder);
     }
 
-    /// Withdraw your share.
+   /// Withdraw your share.
     function withdraw() {
+        // By attempting a send in the conditional, this function is exposed to a re-entrancy attack
+        // A malicious user could recursively call this function, and drain the contract, 
+        // before its shares are ever reset to 0.
         if (msg.sender.send(shares[msg.sender])) {
             shares[msg.sender] = 0;
         } else {
@@ -53,16 +49,18 @@ contract Ethemy {
         }
     }
 
-    function dispense() {
-        require(msg.sender == owner);
-        address shareholder;
-        // Infinite loop since var i goes to 255 and wraps around
-        for (var i = 0; i < shareholders.length; i++) { 
-            shareholder = shareholders[i];
-            uint sh = shares[shareholder];
-            shares[shareholder] = 0;
-            shareholder.send(sh);
-        }
-    }
+   function dispense() {
+      require(msg.sender == owner);
+      address shareholder;
+      // var is equal to uint8, with a max val of 255. This may be intentional, 
+      // But to avoid an infinite loop, an upper bound on shareholders size should be set 
+      // to be less than 255. 
+      for (var i = 0; i < shareholders.length; i++) {
+         shareholder = shareholders[i];
+         uint sh = shares[shareholder];
+         shares[shareholder] = 0;
+         shareholder.send(sh);
+      }
+   }
 
 }
