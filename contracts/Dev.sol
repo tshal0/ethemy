@@ -41,10 +41,6 @@ contract Dev {
         // If sender is unintialized, add them to shareholders
         if (shares[msg.sender] == 0) {
             shareholders.push(msg.sender);
-        }  else if (msg.value > 0) { 
-        // Check if sender was simply de-initialized. If they were, and they're sending money again, set them back to 0 
-       
-            shares[msg.sender] = 0;
         }
         // Add the sent payment to an existing balance 
         shares[msg.sender] = shares[msg.sender] + msg.value;
@@ -60,7 +56,7 @@ contract Dev {
         require(msg.sender == owner);
         if (shareholders.length < MAX_SHAREHOLDERS) {
             shareholders.push(_addr);
-            shares[_addr] = 0;
+            shares[_addr] = 1;
         } else {
             FailedAddShareholder("MAX_SHAREHOLDERS");
         }
